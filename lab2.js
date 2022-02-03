@@ -64,13 +64,31 @@ function onDocumentMouseMove(event) {
     mouseY = (event.clientY - windowHalfY) / windowHalfY
 }
 
-// Stars
-const getRandomParticelPos = (particleCount) => {
-    const arr = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-        arr[i] = (Math.random() - 0.5) * 10;
+function getRandomStarField(numberOfStars, width, height) {
+    var canvas = document.createElement('CANVAS');
+
+    canvas.width = width;
+    canvas.height = height;
+
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, width, height);
+
+    for (var i = 0; i < numberOfStars; ++i) {
+        var radius = Math.random() * 2;
+        var x = Math.floor(Math.random() * width);
+        var y = Math.floor(Math.random() * height);
+
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'white';
+        ctx.fill();
     }
-    return arr;
+
+    var texture = new THREE.Texture(canvas);
+    texture.needsUpdate = true;
+    return texture;
 };
 
 function createSceneGraph() {
@@ -140,24 +158,10 @@ function createSceneGraph() {
 function init() {
     // Look up the canvas
     container = document.getElementById('container')
-    // Create a WebGLRenderer
-    // const renderer = new THREE.WebGLRenderer({ container })
-    // renderer.setClearColor(new THREE.Color("#1c1624"))
 
-
-    camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100)  // fov, aspect, near, far
+    camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 150)  // fov, aspect, near, far
     camera.position.z = 40
     let texloader = new THREE.TextureLoader()
-
-
-    // const boxWidth = 1, boxHeight = 1, boxDepth = 1;
-    // const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
-    // const material = new THREE.MeshBasicMaterial({ color: 0x44aa88 });
-    // const cube = new THREE.Mesh(geometry, material);
-    // sceneRoot.add(cube);
-
-
-
 
     // Sun mesh
     const geometrySun = new THREE.SphereGeometry(3, 32, 32)
@@ -211,24 +215,14 @@ function init() {
     let geometryRing = new THREE.RingGeometry(6, 8, 32)
     let materialRing = new THREE.MeshBasicMaterial({ color: 0x9C9679, side: THREE.DoubleSide })
 
-
-
-
-
-    // **************************************
-
-    document.addEventListener("DOMContentLoaded", () => {
-        container.style.opacity = 1;
-    });
-
-
-
-    // **************************************
-
-
-
-
-
+    // Stars
+    let skyBox = new THREE.BoxGeometry(120, 120, 120);
+    let skyBoxMaterial = new THREE.MeshBasicMaterial({
+        map: getRandomStarField(600, 2048, 2048),
+        side: THREE.BackSide
+    })
+    let sky = new THREE.Mesh(skyBox, skyBoxMaterial)
+    sceneRoot.add(sky)
 
 
     let uniforms = THREE.UniformsUtils.merge([
@@ -354,8 +348,8 @@ function render() {
         saturnOrbit.rotation.y += rotSpeed(10759)   // orbit
         saturnTrans.position.x = 45                 // translate
 
-        // ringRotation.rotation.x += rotSpeed(0.2)
-        // ringRotation.rotation.y += rotSpeed(0.2)
+        ringRotation.rotation.x = tilt(90)
+
     }
 
     // Render the scene
